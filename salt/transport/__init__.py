@@ -325,7 +325,7 @@ class LocalChannel(Channel):
     def send(self, load, tries=3, timeout=60):
 
         if self.tries == 0:
-            log.debug('LocalChannel load: {0}').format(load)
+            log.debug('LocalChannel load: {0}'.format(load))
             #data = json.loads(load)
             #{'path': 'apt-cacher-ng/map.jinja', 'saltenv': 'base', 'cmd': '_serve_file', 'loc': 0}
             #f = open(data['path'])
