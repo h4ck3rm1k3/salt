@@ -313,6 +313,8 @@ def render(template_file, saltenv='base', sls='', argline='',
         raise SaltRenderError(
                 'Unknown renderer option: {opt}'.format(opt=argline)
         )
+#
+#    import pdb; pdb.set_trace();
 
     tmp_data = salt.utils.templates.JINJA(template_file,
                                           to_str=True,
@@ -325,8 +327,12 @@ def render(template_file, saltenv='base', sls='', argline='',
                                           context=context,
                                           tmplpath=tmplpath,
                                           **kws)
-    if not tmp_data.get('result', False):
-        raise SaltRenderError(
-                tmp_data.get('data', 'Unknown render error in jinja renderer')
-        )
-    return StringIO(tmp_data['data'])
+    if tmp_data:
+        if not tmp_data.get('result', False):
+            raise SaltRenderError(
+                    tmp_data.get('data', 'Unknown render error in jinja renderer')
+            )
+        return StringIO(tmp_data['data'])
+
+    else:
+        return None #StringIO("Error")

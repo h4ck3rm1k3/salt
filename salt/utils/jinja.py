@@ -64,6 +64,7 @@ class SaltCacheLoader(BaseLoader):
             saltenv = env
         self.opts = opts
         self.saltenv = saltenv
+        log.debug("saltenv {0}".format(saltenv))
         self.encoding = encoding
         if self.opts.get('__pillar', False):
             self.searchpath = opts['file_roots'][saltenv]
@@ -100,6 +101,10 @@ class SaltCacheLoader(BaseLoader):
             self.cached.append(template)
 
     def get_source(self, environment, template):
+        log.debug(
+            'get source (template=\'{0}\')'.format(template)
+        )
+
         # checks for relative '..' paths
         if '..' in template:
             log.warning(
@@ -111,24 +116,25 @@ class SaltCacheLoader(BaseLoader):
         self.check_cache(template)
 
         # pylint: disable=cell-var-from-loop
-        for spath in self.searchpath:
-            filepath = path.join(spath, template)
-            try:
-                with salt.utils.fopen(filepath, 'rb') as ifile:
-                    contents = ifile.read().decode(self.encoding)
-                    mtime = path.getmtime(filepath)
+        if (isinstance(self.searchpath, list)):
+            for spath in self.searchpath:
+                filepath = path.join(spath, template)
+                try:
+                    with salt.utils.fopen(filepath, 'rb') as ifile:
+                        contents = ifile.read().decode(self.encoding)
+                        mtime = path.getmtime(filepath)
 
-                    def uptodate():
-                        try:
-                            return path.getmtime(filepath) == mtime
-                        except OSError as exp:
-                            log.error('OSError {0}'.format(exp))
-                            return False
-                    return contents, filepath, uptodate
-            except IOError as exp:
-                log.error('IO Error {0}'.format(exp))
-                # there is no file under current path
-                continue
+                        def uptodate():
+                            try:
+                                return path.getmtime(filepath) == mtime
+                            except OSError as exp:
+                                log.error('OSError {0}'.format(exp))
+                                return False
+                        return contents, filepath, uptodate
+                except IOError as exp:
+                    log.error('IO Error {0}'.format(exp))
+                    # there is no file under current path
+                    continue
         # pylint: enable=cell-var-from-loop
 
         # there is no template file within searchpaths

@@ -13,6 +13,7 @@ import logging
 import tempfile
 import traceback
 import sys
+import pprint 
 
 # Import third party libs
 import jinja2
@@ -97,28 +98,28 @@ def wrap_tmpl_func(render_str):
         else:  # assume tmplsrc is file-like.
             tmplstr = tmplsrc.read()
             tmplsrc.close()
-        try:
-            output = render_str(tmplstr, context, tmplpath)
-            if salt.utils.is_windows():
-                # Write out with Windows newlines
-                output = os.linesep.join(output.splitlines())
+        #try:
+        output = render_str(tmplstr, context, tmplpath)
+        if salt.utils.is_windows():
+            # Write out with Windows newlines
+            output = os.linesep.join(output.splitlines())
 
-        except SaltRenderError as exc:
-            log.error("Rendering exception occured :{0}".format(exc))
-            #return dict(result=False, data=str(exc))
-            raise
-        except Exception as exp:
-            log.error('Exception {0}'.format(exp))
-            return dict(result=False, data=traceback.format_exc())
-        else:
-            if to_str:  # then render as string
-                return dict(result=True, data=output)
-            with tempfile.NamedTemporaryFile('wb', delete=False) as outf:
-                outf.write(SLS_ENCODER(output)[0])
-                # Note: If nothing is replaced or added by the rendering
-                #       function, then the contents of the output file will
-                #       be exactly the same as the input.
-            return dict(result=True, data=outf.name)
+        # except SaltRenderError as exc:
+        #     log.error("Rendering exception occured :{0}".format(exc))
+        #     #return dict(result=False, data=str(exc))
+        #     raise
+        # # except Exception as exp:
+        # #     log.error('Exception {0}'.format(exp))
+        # #     return dict(result=False, data=traceback.format_exc())
+        # else:
+        #     if to_str:  # then render as string
+        #         return dict(result=True, data=output)
+        #     with tempfile.NamedTemporaryFile('wb', delete=False) as outf:
+        #         outf.write(SLS_ENCODER(output)[0])
+        #         # Note: If nothing is replaced or added by the rendering
+        #         #       function, then the contents of the output file will
+        #         #       be exactly the same as the input.
+        #     return dict(result=True, data=outf.name)
 
     render_tmpl.render_str = render_str
     return render_tmpl
@@ -262,7 +263,7 @@ def render_jinja_tmpl(tmplstr, context, tmplpath=None):
     if opts.get('allow_undefined', False):
         jinja_env = jinja2.Environment(**env_args)
     else:
-        jinja_env = jinja2.Environment(undefined=jinja2.StrictUndefined,
+        jinja_env = jinja2.Environment(undefined=jinja2.DebugUndefined, #StrictUndefined
                                        **env_args)
 
     jinja_env.filters['strftime'] = salt.utils.date_format
@@ -287,57 +288,60 @@ def render_jinja_tmpl(tmplstr, context, tmplpath=None):
         else:
             unicode_context[key] = six.text_type(value, 'utf-8')
 
-    try:
-        template = jinja_env.from_string(tmplstr)
-        template.globals.update(unicode_context)
-        output = template.render(**unicode_context)
-    except jinja2.exceptions.TemplateSyntaxError as exc:
-        trace = traceback.extract_tb(sys.exc_info()[2])
-        line, out = _get_jinja_error(trace, context=unicode_context)
-        if not line:
-            tmplstr = ''
-        raise SaltRenderError('Jinja syntax error: {0}{1}'.format(exc, out),
-                              line,
-                              tmplstr)
-    except jinja2.exceptions.UndefinedError as exc:
-        trace = traceback.extract_tb(sys.exc_info()[2])
-        out = _get_jinja_error(trace, context=unicode_context)[1]
-        tmplstr = ''
-        # Don't include the line number, since it is misreported
-        # https://github.com/mitsuhiko/jinja2/issues/276
-        raise SaltRenderError(
-            'Jinja variable {0}{1}'.format(
-                exc, out),
-            buf=tmplstr)
-    except (SaltInvocationError, CommandExecutionError) as exc:
-        trace = traceback.extract_tb(sys.exc_info()[2])
-        line, out = _get_jinja_error(trace, context=unicode_context)
-        if not line:
-            tmplstr = ''
-        raise SaltRenderError(
-            'Problem running salt function in Jinja template: {0}{1}'.format(
-                exc, out),
-            line,
-            tmplstr)
-    except Exception as exc:
-        tracestr = traceback.format_exc()
-        trace = traceback.extract_tb(sys.exc_info()[2])
-        line, out = _get_jinja_error(trace, context=unicode_context)
-        if not line:
-            tmplstr = ''
-        else:
-            tmplstr += '\n{0}'.format(tracestr)
-        log.debug("Jinja Error")
-        log.debug("Exception: {0}".format(exc))
-        log.debug("Out: {0}".format(out))
-        log.debug("Line: {0}".format(line))
-        log.debug("TmplStr: {0}".format(tmplstr))
-        log.debug("TraceStr: {0}".format(tracestr))
+    #    try:
+    log.debug("parse string {0}".format(tmplstr))
+    log.debug("context {0}".format(pprint.pformat(unicode_context)))
+    template = jinja_env.from_string(tmplstr)
+    template.globals.update(unicode_context)
+    output = template.render(**unicode_context)
 
-        raise SaltRenderError('Jinja error: {0}{1}'.format(exc, out),
-                              line,
-                              tmplstr,
-                              trace=tracestr)
+    # except jinja2.exceptions.TemplateSyntaxError as exc:
+    #     trace = traceback.extract_tb(sys.exc_info()[2])
+    #     line, out = _get_jinja_error(trace, context=unicode_context)
+    #     if not line:
+    #         tmplstr = ''
+    #     raise SaltRenderError('Jinja syntax error: {0}{1}'.format(exc, out),
+    #                           line,
+    #                           tmplstr)
+    # except jinja2.exceptions.UndefinedError as exc:
+    #     trace = traceback.extract_tb(sys.exc_info()[2])
+    #     out = _get_jinja_error(trace, context=unicode_context)[1]
+    #     tmplstr = ''
+    #     # Don't include the line number, since it is misreported
+    #     # https://github.com/mitsuhiko/jinja2/issues/276
+    #     raise SaltRenderError(
+    #         'Jinja variable {0}{1}'.format(
+    #             exc, out),
+    #         buf=tmplstr)
+    # except (SaltInvocationError, CommandExecutionError) as exc:
+    #     trace = traceback.extract_tb(sys.exc_info()[2])
+    #     line, out = _get_jinja_error(trace, context=unicode_context)
+    #     if not line:
+    #         tmplstr = ''
+    #     raise SaltRenderError(
+    #         'Problem running salt function in Jinja template: {0}{1}'.format(
+    #             exc, out),
+    #         line,
+    #         tmplstr)
+    # except Exception as exc:
+    #     tracestr = traceback.format_exc()
+    #     trace = traceback.extract_tb(sys.exc_info()[2])
+    #     line, out = _get_jinja_error(trace, context=unicode_context)
+    #     if not line:
+    #         tmplstr = ''
+    #     else:
+    #         tmplstr += '\n{0}'.format(tracestr)
+    #     log.debug("Jinja Error")
+    #     log.debug("Exception: {0}".format(exc))
+    #     log.debug("Out: {0}".format(out))
+    #     log.debug("Line: {0}".format(line))
+    #     log.debug("TmplStr: {0}".format(tmplstr))
+    #     log.debug("TraceStr: {0}".format(tracestr))
+
+    #     raise SaltRenderError('Jinja error: {0}{1}'.format(exc, out),
+    #                           line,
+    #                           tmplstr,
+    #                           trace=tracestr)
 
     # Workaround a bug in Jinja that removes the final newline
     # (https://github.com/mitsuhiko/jinja2/issues/75)
