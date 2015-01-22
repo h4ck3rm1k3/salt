@@ -112,14 +112,15 @@ def wrap_tmpl_func(render_str):
         # #     log.error('Exception {0}'.format(exp))
         # #     return dict(result=False, data=traceback.format_exc())
         # else:
-        #     if to_str:  # then render as string
-        #         return dict(result=True, data=output)
-        #     with tempfile.NamedTemporaryFile('wb', delete=False) as outf:
-        #         outf.write(SLS_ENCODER(output)[0])
-        #         # Note: If nothing is replaced or added by the rendering
-        #         #       function, then the contents of the output file will
-        #         #       be exactly the same as the input.
-        #     return dict(result=True, data=outf.name)
+
+        if to_str:  # then render as string
+            return dict(result=True, data=output)
+        with tempfile.NamedTemporaryFile('wb', delete=False) as outf:
+            outf.write(SLS_ENCODER(output)[0])
+            # Note: If nothing is replaced or added by the rendering
+            # function, then the contents of the output file will
+            #       be exactly the same as the input.
+            return dict(result=True, data=outf.name)
 
     render_tmpl.render_str = render_str
     return render_tmpl
@@ -291,11 +292,13 @@ def render_jinja_tmpl(tmplstr, context, tmplpath=None):
             unicode_context[key] = six.text_type(value, 'utf-8')
 
     #    try:
-    log.debug("parse string {0}".format(tmplstr))
+    #log.debug("input template string {0}".format(tmplstr))
     log.debug("context {0}".format(pprint.pformat(unicode_context)))
     template = jinja_env.from_string(tmplstr)
+    log.debug("template {0}".format(template))
     template.globals.update(unicode_context)
     output = template.render(**unicode_context)
+    #log.debug("output template string {0}".format(output))
 
     # except jinja2.exceptions.TemplateSyntaxError as exc:
     #     trace = traceback.extract_tb(sys.exc_info()[2])

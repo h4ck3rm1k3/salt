@@ -183,6 +183,7 @@ def check_render_pipe_str(pipestr, renderers):
     If so, return the list of render functions in the pipe as
     (render_func, arg_str) tuples; otherwise return [].
     '''
+    log.debug("Pipestring {0}".format(pipestr))
     parts = [r.strip() for r in pipestr.split('|')]
     # Note: currently, | is not allowed anywhere in the shebang line except
     #       as pipes between renderers.

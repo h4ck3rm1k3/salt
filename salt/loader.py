@@ -676,7 +676,8 @@ class Loader(object):
             mod.__opts__ = self.opts
 
         mod.__grains__ = self.grains
-
+        print "Mod Grains"
+        pprint.pprint (mod.__grains__)
         if pack:
             if isinstance(pack, list):
                 for chunk in pack:
@@ -1148,6 +1149,7 @@ class Loader(object):
                     log.warning(msg)
                 else:
                     log.debug('going to call virtual for mod "{0}"'.format(module_name))
+                    log.debug('with grains "{0}"'.format(mod.__grains__))
                     virtual = mod.__virtual__()
                     if isinstance(virtual, tuple):
                         error_reasons = virtual[1]
