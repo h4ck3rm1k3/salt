@@ -263,8 +263,10 @@ def render_jinja_tmpl(tmplstr, context, tmplpath=None):
     if opts.get('allow_undefined', False):
         jinja_env = jinja2.Environment(**env_args)
     else:
-        jinja_env = jinja2.Environment(undefined=jinja2.DebugUndefined, #StrictUndefined
-                                       **env_args)
+        jinja_env = jinja2.Environment(
+            #undefined=jinja2.DebugUndefined, #StrictUndefined
+            undefined=jinja2.StrictUndefined,
+            **env_args)
 
     jinja_env.filters['strftime'] = salt.utils.date_format
     jinja_env.filters['sequence'] = ensure_sequence_filter
